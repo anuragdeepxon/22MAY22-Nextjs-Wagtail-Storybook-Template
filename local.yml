@@ -1,0 +1,125 @@
+version: '3.3'
+
+volumes:
+  local_postgres_data: {}
+  local_postgres_data_backups: {}
+
+services:
+  django: &django
+    build:
+      context: ./packages/backend
+      dockerfile: ./compose/local/django/Dockerfile
+    image: fluid_art_local_django
+    container_name: django_fluid_art
+    depends_on:
+      - postgres
+      - mailhog
+    volumes:
+      - ./packages/backend:/app:z
+    env_file:
+      - ./packages/backend/.envs/.local/.django
+      - ./packages/backend/.envs/.local/.postgres
+    ports:
+      - "8000:8000"
+    command: /start
+
+  postgres:
+    build:
+      context: ./packages/backend
+      dockerfile: ./compose/production/postgres/Dockerfile
+    image: fluid_art_production_postgres
+    container_name: postgres_fluid_art
+    volumes:
+      - local_postgres_data:/var/lib/postgresql/data:Z
+      - local_postgres_data_backups:/backups:z
+    env_file:
+      - ./packages/backend/.envs/.local/.postgres
+
+  docs:
+    image: fluid_art_local_docs
+    container_name: docs_fluid_art
+    build:
+      context: ./packages/backend
+      dockerfile: ./compose/local/docs/Dockerfile
+    env_file:
+      - ./packages/backend/.envs/.local/.django
+    volumes:
+      - ./packages/backend/docs:/docs:z
+      - ./packages/backend/config:/app/config:z
+      - ./packages/backend/backend:/app/backend:z
+    ports:
+      - "7000:7000"
+    command: /start-docs
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.0
+    container_name: mailhog_fluid_art
+    ports:
+      - "8025:8025"
+
+  redis:
+    image: redis:5.0
+    container_name: redis_fluid_art
+
+  celeryworker:
+    <<: *django
+    image: fluid_art_local_celeryworker
+    container_name: celeryworker_fluid_art
+    depends_on:
+      - redis
+      - postgres
+      - mailhog
+    ports: []
+    command: /start-celeryworker
+
+  celerybeat:
+    <<: *django
+    image: fluid_art_local_celerybeat
+    container_name: celerybeat_fluid_art
+    depends_on:
+      - redis
+      - postgres
+      - mailhog
+    ports: []
+    command: /start-celerybeat
+
+  flower:
+    <<: *django
+    image: fluid_art_local_flower
+    container_name: flower_fluid_art
+    ports:
+      - "5555:5555"
+    command: /start-flower
+
+  node:
+    build:
+      context: ./packages/backend
+      dockerfile: ./compose/local/node/Dockerfile
+    image: fluid_art_local_node
+    container_name: node_fluid_art
+    depends_on:
+      - django
+    volumes:
+      - ./packages/backend:/app:z
+      # http://jdlm.info/articles/2016/03/06/lessons-building-node-app-docker.html
+      - /app/node_modules
+    command: npm run dev
+    ports:
+      - "3000:3000"
+      # Expose browsersync UI: https://www.browsersync.io/docs/options/#option-ui
+      - "3001:3001"
+
+  nextjs:
+    ports:
+      - "4000:4000"
+    image: fluid_art_local_frontend
+    container_name: frontend_fluid_art
+    build:
+      context: ./packages/frontend
+      dockerfile: ./compose/local/nextjs/Dockerfile
+    volumes:
+      - ./packages/frontend:/usr/src/app
+      - /usr/src/app/node_modules
+      - /usr/src/app/.frontend
+    env_file:
+      - ./packages/frontend/.envs/.local/.nextjs

@@ -1,0 +1,21 @@
+.bg-primary {
+    @apply bg-indigo-600
+}
+.bg-primary-hover {
+    @apply bg-indigo-700
+}
+.text-primary-btn {
+    @apply text-white
+}
+.ring-focus-primary {
+    @apply ring-indigo-500
+}
+.bg-secondary {
+    @apply bg-indigo-100
+}
+.bg-secondary-hover {
+    @apply bg-indigo-200
+}
+.text-secondary-btn {
+    @apply ring-indigo-500
+}

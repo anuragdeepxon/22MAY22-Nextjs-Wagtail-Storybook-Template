@@ -1,0 +1,27 @@
+.button {
+  @apply inline-flex items-center border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-opacity-50 hover:-translate-y-0.5 transition
+}
+
+.button-primary {
+  @apply border-transparent bg-primary ring-primary-light text-white hover:bg-primary-light active:bg-primary-dark
+}
+
+.button-secondary {
+  @apply border-transparent bg-secondary text-white hover:bg-secondary-light active:bg-secondary-dark
+}
+
+.button-white {
+  @apply border-gray-300 bg-white ring-primary-light text-gray-700 active:bg-gray-50
+}
+
+.button-sm {
+  @apply px-3 py-2 text-sm font-medium
+}
+
+.button-md {
+  @apply px-4 py-2 text-sm font-medium
+}
+
+.button-lg {
+  @apply px-4 py-2 text-base font-medium
+}

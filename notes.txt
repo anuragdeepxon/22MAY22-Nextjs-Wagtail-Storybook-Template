@@ -1,0 +1,19 @@
+docker-compose -f local.yml build
+
+docker-compose -f local.yml up
+
+docker-compose -f local.yml run --rm django python manage.py migrate
+docker-compose -f local.yml run --rm django python manage.py createsuperuser
+
+
+http://localhost:3000/ = Wagtail
+http://localhost:4000/ = React Frontend
+
+
+Using Storybook
+Go to Frontend Directory
+npm install
+npm run storybook
+
+
+http://localhost:6006/ = Storybook

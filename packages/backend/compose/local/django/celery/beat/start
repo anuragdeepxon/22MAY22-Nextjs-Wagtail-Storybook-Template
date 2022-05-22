@@ -1,0 +1,8 @@
+#!/bin/bash
+
+set -o errexit
+set -o nounset
+
+
+rm -f './packages/backend/celerybeat.pid'
+celery -A config.celery_app beat -l INFO

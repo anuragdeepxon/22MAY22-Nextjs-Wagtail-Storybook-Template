@@ -1,0 +1,85 @@
+version: '3'
+
+volumes:
+#  production_postgres_data: {}
+#  production_postgres_data_backups: {}
+  production_traefik: {}
+
+services:
+  django: &django
+    build:
+      context: ./packages/backend
+      dockerfile: ./compose/production/django/Dockerfile
+    image: fluid_art_production_django
+    depends_on:
+#      - postgres
+      - redis
+    env_file:
+      - ./packages/backend/.envs/.production/.django
+      - ./packages/backend/.envs/.production/.postgres
+    command: /start
+
+#  postgres:
+#    build:
+#      context: ./packages/backend
+#      dockerfile: ./compose/production/postgres/Dockerfile
+#    image: fluid_art_production_postgres
+#    volumes:
+#      - ./packages/backend/production_postgres_data:/var/lib/postgresql/data:Z
+#      - ./packages/backend/production_postgres_data_backups:/backups:z
+#    env_file:
+#      - ./packages/backend/.envs/.production/.postgres
+
+  traefik:
+    build:
+      context: ./packages/backend
+      dockerfile: ./compose/production/traefik/Dockerfile
+    image: fluid_art_production_traefik
+    depends_on:
+      - django
+    volumes:
+      - ./packages/backend/production_traefik:/etc/traefik/acme:z
+    ports:
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+      - "0.0.0.0:5555:5555"
+
+  redis:
+    image: redis:5.0
+
+  celeryworker:
+    <<: *django
+    image: fluid_art_production_celeryworker
+    command: /start-celeryworker
+
+  celerybeat:
+    <<: *django
+    image: fluid_art_production_celerybeat
+    command: /start-celerybeat
+
+  flower:
+    <<: *django
+    image: fluid_art_production_flower
+    command: /start-flower
+
+  awscli:
+    build:
+      context: ./packages/backend
+      dockerfile: ./compose/production/aws/Dockerfile
+    env_file:
+      - ./packages/backend/.envs/.production/.django
+    volumes:
+      - ./packages/backend/production_postgres_data_backups:/backups:z
+
+  nextjs:
+    image: fluid_art_local_frontend
+    container_name: frontend
+    build:
+      context: ./packages/frontend
+      dockerfile: ./compose/production/nextjs/Dockerfile
+    volumes:
+      - ./packages/frontend:/usr/src/app
+      - /usr/src/app/node_modules
+      - /usr/src/app/.frontend
+    env_file:
+      - ./packages/frontend/.envs/.production/.nextjs
